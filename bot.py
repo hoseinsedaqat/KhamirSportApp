@@ -73,7 +73,7 @@ async def get_tides():
             for event in tide_events:
                 event_time = datetime.fromisoformat(event["time"].replace("Z", "+00:00"))
                 local_time = event_time.astimezone(TIDE_TIMEZONE)
-                parsed_events.append((local_time, event["type"]))
+                parsed_events.append((local_time, event["type"], event.get("height")))
 
             today = datetime.now(TIDE_TIMEZONE).date()
             today_events = [event for event in parsed_events if event[0].date() == today]
@@ -85,10 +85,15 @@ async def get_tides():
 
             today_events.sort(key=lambda event: event[0])
             event_lines = []
-            for local_time, tide_type in today_events:
+            for local_time, tide_type, height in today_events:
                 label = "مد (آب بالاست)" if tide_type == "high" else "جزر (آب پایینه)"
                 icon = "🌊" if tide_type == "high" else "🏖️"
-                event_lines.append(f"{icon} {label} - ساعت {local_time:%H:%M}")
+                height_text = f"{float(height):.2f} متر" if height is not None else "نامشخص"
+                event_lines.append(
+                    f"{icon} {label}\n"
+                    f"   ⏰ ساعت: {local_time:%H:%M}\n"
+                    f"   📏 ارتفاع آب: {height_text}"
+                )
 
             date_text = selected_date.strftime("%Y/%m/%d")
             return "🌊 جزر و مد بندرخمیر\n" f"📅 تاریخ: {date_text}\n\n" + "\n".join(event_lines)
